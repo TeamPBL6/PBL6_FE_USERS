@@ -139,6 +139,7 @@ fetch('Footer.html')
         const modal = new bootstrap.Modal(document.getElementById('uploadSuccessModal'));
         modal.show();
     }
+    
 // Hàm test modal thành công
 // function testSuccessModal() {
 //     // Mô phỏng dữ liệu từ server

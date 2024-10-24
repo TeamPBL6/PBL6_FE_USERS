@@ -58,7 +58,7 @@
        <h2>LOGIN</h2>
      <input type="text" placeholder="Email" />
     <input type="password" placeholder="Password" />
-    <button class="btn_login" >LOGIN</button>
+    <button class="btn_login"  onclick="handleLogin()">LOGIN</button>
       </div>
       
        <div class="cont_form_sign_up">
@@ -67,7 +67,7 @@
     <input type="text" placeholder="Email" />
     <input type="password" placeholder="Password" />
     <input type="password" placeholder="Confirm Password" />
-    <button class="btn_sign_up" >SIGN UP</button>
+    <button class="btn_sign_up" onclick="handleSignUp()" >SIGN UP</button>
     
       </div>
     
@@ -76,4 +76,81 @@
       </div>
      </div>
     </div>
+  <script>
+    // Hàm xử lý logic đăng nhập
+    function handleLogin() {
+      const email = document.querySelector('.cont_form_login input[type="text"]').value;
+      const password = document.querySelector('.cont_form_login input[type="password"]').value;
+  
+      fetch('http://localhost:8181/api/auth/login', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+              username: email,
+              password: password
+          })
+      })
+      .then(response => {
+          if (!response.ok) {
+              throw new Error("Invalid username or password");
+          }
+          return response.json();
+      })
+      .then(data => {
+          console.log('Response data:', data); // Ghi lại phản hồi
+          if (data.data && data.data.token) { // Kiểm tra token
+            localStorage.setItem('token', data.data.token);
+            localStorage.setItem('username', data.data.user.username);// Lưu token
+              console.log('Saved token:', localStorage.getItem('token')); // Kiểm tra token đã lưu
+              window.location.href = '/index.html'; // Chuyển hướng
+          } else {
+              throw new Error("Token not found in response");
+          }
+      })
+      .catch(error => {
+          alert(error.message); // Hiển thị thông báo lỗi cho người dùng
+      });
+  }
+  
+
+// Hàm xử lý logic đăng ký
+function handleSignUp() {
+  const email = document.querySelector('.cont_form_sign_up input[type="text"]').value;
+  const password = document.querySelector('.cont_form_sign_up input[type="password"]').value;
+  const confirmPassword = document.querySelectorAll('.cont_form_sign_up input[type="password"]')[1].value;
+
+  if (password !== confirmPassword) {
+      alert("Passwords do not match");
+      return;
+  }
+
+  fetch('http://localhost:8181/api/auth/register', {  // Địa chỉ API đăng ký
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+          email: email,  // Giả sử API đăng ký yêu cầu 'email'
+          password: password
+      })
+  })
+  .then(response => {
+      if (!response.ok) {
+          throw new Error("Registration failed");
+      }
+      return response.json();
+  })
+  .then(data => {
+      alert("Registration successful!");
+      // Sau khi đăng ký thành công, có thể chuyển hướng đến trang đăng nhập
+      window.location.href = '/Login.html';
+  })
+  .catch(error => {
+      alert(error.message);  // Hiển thị thông báo lỗi cho người dùng
+  });
+}
+
+  </script>
 </body>
