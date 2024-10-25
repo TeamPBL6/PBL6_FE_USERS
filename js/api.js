@@ -50,16 +50,20 @@ window.onload = function() {
 document.addEventListener('DOMContentLoaded', function() {
     fetchMusics();
 });
-
+let musics = [];
 async function fetchMusics() {
     try {
-        const response = await fetch(API_BASE_URL+'/api/musics?page=1&pageSize=10');
+        const response = await fetch(API_BASE_URL + '/api/musics?page=1&pageSize=10');
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const result = await response.json();
         
+        console.log('API response:', result); // Log phản hồi API
+
         if (result.status === 200 && result.data && result.data.items) {
-            displayMusics(result.data.items);
-            generateModals(result.data.items);
+            musics = result.data.items; // Gán giá trị cho biến musics
+            console.log('Fetched musics:', musics); // Log dữ liệu được fetch
+            displayMusics(musics);
+            generateModals(musics);
         } else {
             throw new Error('Invalid data format');
         }
@@ -196,28 +200,52 @@ function togglePlay(url, button) {
     }
 }
 async function purchaseMusic(musicId) {
+    console.log('Attempting to purchase music with ID:', musicId);
+    const userId = localStorage.getItem('userId'); // Lấy ID người mua từ localStorage
+    const walletId = localStorage.getItem('walletId'); // Lấy walletId người mua từ localStorage
+    const music = musics.find(m => m.id === musicId); // Tìm bài nhạc theo ID
+    console.log('userId:', userId); // Log giá trị userId
+    console.log('walletId:', walletId); // Log giá trị walletId
+    console.log('music:', music);
+    console.log('All musics:', musics); 
+    
+    if (!userId || !walletId || !music) {
+        alert('User or wallet information is missing. Please log in.');
+        console.error('User or wallet information is missing.');
+        return;
+    }
+
+    // Thông tin giao dịch
+    const purchaseData = {
+        userId: Number(userId),
+        composerId: music.composerId, // Giả sử mỗi đối tượng nhạc có composerId
+        price: music.price,
+        musicId: musicId
+    };
+    console.log('Purchase Data:', JSON.stringify(purchaseData));
+
     try {
-        const response = await fetch(API_BASE_URL+'/api/payment/create-vnpay-payment', {
+        const response = await fetch('http://localhost:8181/api/wallet/purchaseMusic', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}` // Nếu cần
             },
-            body: JSON.stringify({ musicId: musicId }),
+            body: JSON.stringify(purchaseData)
         });
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error('Transaction failed.');
         }
 
         const result = await response.json();
-
-        if (result.paymentUrl) {
-            // Chuyển hướng đến URL thanh toán
-            window.location.href = result.paymentUrl.replace(/\"/g, ''); // Xóa dấu ngoặc kép nếu có
-        } else {
-            throw new Error('Invalid payment URL');
-        }
+        alert(`Purchase successful! Remaining balance: $${result.newBalance}`);
+        window.location.href = '/index.html';
+        // Cập nhật số dư ví hiển thị
+        document.getElementById('walletBalance').textContent = `${result.newBalance}$`;
     } catch (error) {
-        console.error('Error creating payment:', error);
-        alert('An error occurred while processing your payment. Please try again.');
-    }}
+        console.error('There was a problem with the purchase:', error);
+        alert('Transaction failed. Please try again later.');
+    }
+}
+

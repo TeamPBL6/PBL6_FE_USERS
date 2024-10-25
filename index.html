@@ -40,7 +40,7 @@
                         <i class="fas fa-coins me-1" style="color: gold;"></i>
                         <span id="walletBalance" class="nav-link d-flex align-items-center">
                             <!-- Biểu tượng đồng xu -->
-                            Xu: 0
+                             0$
                         </span>
                         <a href="#" class="nav-link" onclick="deposit()" title="Nạp tiền">
                             <i class="fas fa-plus plus-icon" style="font-size: 1.5rem; color: black;"></i> <!-- Dấu cộng không có bo tròn -->
@@ -268,6 +268,7 @@
                 </div>
             </div>
         </section>
+       
         <div id="footer"></div>
         <!-- Portfolio Modals-->
         <!-- Portfolio Modal 1-->
@@ -318,7 +319,7 @@
                 // Gọi hàm để lấy số dư ví
                 fetchWalletBalance(walletId).then(balance => {
                     const walletBalanceElement = document.getElementById('walletBalance');
-                    walletBalanceElement.textContent = `Xu: ${balance}`; // Cập nhật số dư ví
+                    walletBalanceElement.textContent = ` ${balance}$`; // Cập nhật số dư ví
                 });
             } else {
                 // Hiển thị link đăng nhập nếu không có token
@@ -344,21 +345,34 @@
         // Hàm lấy số dư ví từ API
         async function fetchWalletBalance(walletId) {
             try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    console.error('No token found. Please log in.');
+                    return; // Không thực hiện tiếp nếu không có token
+                }
+        
                 console.log('Fetching balance for walletId:', walletId);
                 const response = await fetch(`http://localhost:8181/api/wallet/${walletId}`, {
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}` // Thêm token vào header nếu cần
+                        'Authorization': `Bearer  ${token}` // Thêm token vào header
                     }
                 });
+        
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    // Nếu không thành công, kiểm tra mã lỗi và hiển thị thông báo tương ứng
+                    const errorMessage = await response.text(); // Lấy thông báo lỗi từ máy chủ
+                    console.error(`Error ${response.status}: ${errorMessage}`);
+                    alert(`Failed to fetch wallet balance: ${errorMessage}`);
+                    return; // Dừng thực hiện nếu có lỗi
                 }
+        
                 const data = await response.json();
                 return data.balance; // Giả sử API trả về một đối tượng chứa balance
             } catch (error) {
                 console.error('There has been a problem with your fetch operation:', error);
             }
         }
+        
         function deposit() {
             const amount = prompt("Nhập số tiền bạn muốn nạp:");
             if (amount && !isNaN(amount) && amount > 0) {
