@@ -103,6 +103,7 @@
           if (data.data && data.data.token) { // Kiểm tra token
             localStorage.setItem('token', data.data.token);
             localStorage.setItem('username', data.data.user.username);// Lưu token
+            localStorage.setItem('username', data.data.user.walletId);
               console.log('Saved token:', localStorage.getItem('token')); // Kiểm tra token đã lưu
               window.location.href = '/index.html'; // Chuyển hướng
           } else {

@@ -11160,3 +11160,37 @@ html {
     content: "🚪";
     margin-right: 8px;
 }
+.wallet-item {
+  background-color: rgba(255, 255, 255, 0.9); /* Màu nền trắng với độ trong suốt */
+  border-radius: 5px; /* Bo tròn góc */
+  display: flex; /* Để căn chỉnh nội dung */
+  align-items: center; /* Căn giữa theo chiều dọc */
+  padding: 10px; /* Khoảng cách cho phần tử */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Đổ bóng nhẹ */
+}
+
+#walletBalance {
+  display: flex; /* Sử dụng flex để sắp xếp đồng xu và số dư */
+  align-items: center; /* Căn giữa đồng xu và số dư */
+  margin-right: 10px; /* Khoảng cách giữa số dư và biểu tượng dấu cộng */
+}
+
+.fa-coins {
+  font-size: 1.5rem; /* Kích thước biểu tượng đồng xu */
+  margin-right: 5px; /* Khoảng cách giữa biểu tượng đồng xu và số dư */
+  color: gold; /* Màu vàng cho biểu tượng đồng xu */
+  z-index: 1001; /* Đảm bảo không bị che khuất */
+}
+
+.fa-plus {
+  font-size: 2rem; /* Kích thước lớn hơn cho biểu tượng dấu cộng */
+  color: black; /* Đổi màu thành đen */
+  z-index: 1001; /* Đảm bảo biểu tượng này nằm trên các phần tử khác */
+}
+
+
+.plus-icon:hover {
+  transform: scale(1.2); /* Tăng kích thước khi hover */
+  color: blue; /* Đổi màu thành xanh khi hover */
+}
+

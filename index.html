@@ -36,6 +36,17 @@
                     
                     <!-- Profile Menu or Login Link -->
                     <li class="nav-item mx-0 mx-lg-1" id="authMenu"></li>
+                    <li class="nav-item mx-0 mx-lg-1 d-flex align-items-center wallet-item">
+                        <i class="fas fa-coins me-1" style="color: gold;"></i>
+                        <span id="walletBalance" class="nav-link d-flex align-items-center">
+                            <!-- Biểu tượng đồng xu -->
+                            Xu: 0
+                        </span>
+                        <a href="#" class="nav-link" onclick="deposit()" title="Nạp tiền">
+                            <i class="fas fa-plus plus-icon" style="font-size: 1.5rem; color: black;"></i> <!-- Dấu cộng không có bo tròn -->
+                        </a>
+                    </li>
+                    
                 </ul>
             </div>
         </div>
@@ -287,39 +298,111 @@
         function checkAuth() {
             const token = localStorage.getItem('token');
             const username = localStorage.getItem('username'); // Giả sử bạn lưu tên người dùng ở đây
+            const walletId = localStorage.getItem('walletId'); // Lưu walletId trong localStorage
             const authMenu = document.getElementById('authMenu');
-
+        
             console.log('Current token:', token); // Kiểm tra token
-
+        
             if (token) {
                 // Hiển thị tên người dùng với menu xổ xuống
                 authMenu.innerHTML = `
                     <a class="nav-link dropdown-toggle py-3 px-0 px-lg-3 rounded" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                      👤 ${username || 'User'}
+                        👤 ${username || 'User'}
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li><a class="dropdown-item history" href="#history">History</a></li>
                         <li><a class="dropdown-item logout" href="#" onclick="logout()">Logout</a></li>
+                    
                     </ul>
                 `;
+                // Gọi hàm để lấy số dư ví
+                fetchWalletBalance(walletId).then(balance => {
+                    const walletBalanceElement = document.getElementById('walletBalance');
+                    walletBalanceElement.textContent = `Xu: ${balance}`; // Cập nhật số dư ví
+                });
             } else {
                 // Hiển thị link đăng nhập nếu không có token
                 authMenu.innerHTML = '<a class="nav-link py-3 px-0 px-lg-3 rounded" href="/Login.html">Login</a>';
             }
         }
-
+        
         function logout() {
             localStorage.removeItem('token');
             localStorage.removeItem('username'); // Xóa tên người dùng
+            localStorage.removeItem('walletId'); // Xóa walletId
             checkAuth();
         }
-
+        
         window.onload = function() {
             // Bạn có thể thêm token và tên giả mạo ở đây để kiểm tra
             // localStorage.setItem('token', 'your_fake_token');
             // localStorage.setItem('username', 'Tên Người Dùng');
+            // localStorage.setItem('walletId', '4'); // Ví dụ walletId
             checkAuth();
-        };
+        }
+        
+        // Hàm lấy số dư ví từ API
+        async function fetchWalletBalance(walletId) {
+            try {
+                console.log('Fetching balance for walletId:', walletId);
+                const response = await fetch(`http://localhost:8181/api/wallet/${walletId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}` // Thêm token vào header nếu cần
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                return data.balance; // Giả sử API trả về một đối tượng chứa balance
+            } catch (error) {
+                console.error('There has been a problem with your fetch operation:', error);
+            }
+        }
+        function deposit() {
+            const amount = prompt("Nhập số tiền bạn muốn nạp:");
+            if (amount && !isNaN(amount) && amount > 0) {
+                // Gọi API để nạp tiền vào ví (giả sử có API để nạp tiền)
+                fetch(`http://localhost:8181/api/wallet/deposit`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ walletId: localStorage.getItem('walletId'), amount: parseFloat(amount) })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Nạp tiền không thành công.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Cập nhật lại số dư ví sau khi nạp tiền thành công
+                    fetchWalletBalance(localStorage.getItem('walletId')).then(balance => {
+                        const walletBalanceElement = document.getElementById('walletBalance');
+                        walletBalanceElement.textContent = `Xu: ${balance}`; // Cập nhật số dư ví
+                    });
+                })
+                .catch(error => {
+                    console.error('Lỗi khi nạp tiền:', error);
+                    alert('Có lỗi xảy ra! Vui lòng thử lại.');
+                });
+            } else {
+                alert('Vui lòng nhập một số hợp lệ!');
+            }
+        }
+        
+        
+        // Hàm gọi sau khi người dùng đăng nhập thành công
+        function onLoginSuccess(token, walletId) {
+            // Lưu walletId vào localStorage
+            localStorage.setItem('walletId', walletId);
+            
+            // Cập nhật giao diện
+            checkAuth();
+        }
+        
     </script>
     </body>
 </html>
