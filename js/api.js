@@ -164,7 +164,10 @@ function generateModals(musics) {
                                         </div>
                                     </div>
 
-                                   <button class="btn btn-primary" onclick="purchaseMusic(${music.id})">Buy Now with VNPay</button>
+                                 <button class="btn btn-primary" onclick="purchaseMusic(${music.id})">
+    <i class="fas fa-shopping-cart"></i> Mua
+</button>
+
                                 </div>
                             </div>
                         </div>
