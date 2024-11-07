@@ -11000,8 +11000,10 @@ html {
   position: relative;
   display: block;
   max-width: 25rem;
+  border: 2px solid black;
   border-radius: 0.5rem;
   overflow: hidden;
+  transition: transform 0.2s;
 }
 .portfolio .portfolio-item .portfolio-item-caption {
   position: absolute;
@@ -11194,3 +11196,92 @@ html {
   color: blue; /* Đổi màu thành xanh khi hover */
 }
 
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Deposit Box */
+.deposit-box {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  position: relative;
+}
+
+.deposit-box h2 {
+  margin-top: 0;
+}
+
+.deposit-box input[type="number"] {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.deposit-box button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.deposit-box button.confirm {
+  background-color: #28a745;
+  color: #fff;
+}
+
+.deposit-box button.cancel {
+  background-color: #dc3545;
+  color: #fff;
+  margin-left: 10px;
+}
+
+/* Close Button */
+.deposit-box .close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 18px;
+  color: #333;
+  cursor: pointer;
+}
+.modal1 {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+
+.modal-box {
+  background: #fff;
+  padding: 20px;
+  border-radius: 5px;
+  text-align: center;
+  width: 300px;
+}
+.modal.show {
+  z-index: 1060 !important; /* Đảm bảo modal hiển thị ở trên cùng */
+}
