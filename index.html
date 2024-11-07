@@ -40,9 +40,9 @@
                         <i class="fas fa-coins me-1" style="color: gold;"></i>
                         <span id="walletBalance" class="nav-link d-flex align-items-center">
                             <!-- Biểu tượng đồng xu -->
-                             0$
+                             0 VND
                         </span>
-                        <a href="#" class="nav-link" onclick="deposit()" title="Nạp tiền">
+                        <a  class="nav-link" onclick="deposit()" title="Nạp tiền">
                             <i class="fas fa-plus plus-icon" style="font-size: 1.5rem; color: black;"></i> <!-- Dấu cộng không có bo tròn -->
                         </a>
                     </li>
@@ -268,7 +268,34 @@
                 </div>
             </div>
         </section>
-       
+        <div id="depositModal" class="modal-overlay">
+            <div class="deposit-box">
+              <span class="close-btn" onclick="closeModal()">×</span>
+              <h2>Nạp tiền vào ví</h2>
+              <input type="number" id="amountInput" placeholder="Nhập số tiền...(VND)" min="1">
+              <button class="confirm" onclick="confirmDeposit()">Nạp tiền</button>
+              <button class="cancel" onclick="closeModal()">Hủy</button>
+            </div>
+          </div>
+          <!-- Modal Xác Nhận Mua Nhạc -->
+<div class="modal fade" id="purchaseModal" tabindex="-1" aria-labelledby="purchaseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="purchaseModalLabel">Xác Nhận Mua Nhạc</h5>
+               
+            </div>
+            <div class="modal-body">
+                Bạn có chắc chắn muốn mua bài hát này không?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancelButton">Hủy</button>
+                <button type="button" class="btn btn-primary" id="confirmPurchaseButton">Xác Nhận</button>
+            </div>
+        </div>
+    </div>
+</div>
+
         <div id="footer"></div>
         <!-- Portfolio Modals-->
         <!-- Portfolio Modal 1-->
@@ -276,6 +303,7 @@
         <!-- Modals will be generated here -->
     </div>
 </div>
+
 <!-- <button class="btn btn-info" onclick="testSuccessModal()">
     Test Success Modal
 </button> -->
@@ -319,7 +347,7 @@
                 // Gọi hàm để lấy số dư ví
                 fetchWalletBalance(walletId).then(balance => {
                     const walletBalanceElement = document.getElementById('walletBalance');
-                    walletBalanceElement.textContent = ` ${balance}$`; // Cập nhật số dư ví
+                    walletBalanceElement.textContent = ` ${balance} VND`; // Cập nhật số dư ví
                 });
             } else {
                 // Hiển thị link đăng nhập nếu không có token
@@ -387,12 +415,35 @@ async function getIpAddress() {
 }
 
 async function deposit() {
-    const amount = prompt("Nhập số tiền bạn muốn nạp:");
+    // Check for login token
+    const token = localStorage.getItem('token');
+    if (!token) {
+        alert('Vui lòng đăng nhập để thực hiện nạp tiền!');
+        localStorage.setItem('redirectAfterLogin', window.location.pathname);
+        window.location.href = '/login';
+        return;
+    }
+
+    // Show modal for deposit amount input
+    document.getElementById('depositModal').style.display = 'flex';
+}
+
+// Function to close modal
+function closeModal() {
+    document.getElementById('depositModal').style.display = 'none';
+}
+
+// Function to handle the deposit confirmation
+async function confirmDeposit() {
+    const amount = document.getElementById('amountInput').value;
     if (amount && !isNaN(amount) && amount > 0) {
         try {
             const ipAddress = await getIpAddress();
             
-            // Gọi API để tạo URL thanh toán VNPay
+            if (!localStorage.getItem('token')) {
+                throw new Error('Phiên đăng nhập đã hết hạn');
+            }
+
             const response = await fetch(`http://localhost:8181/api/payment/create-payment`, {
                 method: 'POST',
                 headers: {
@@ -412,13 +463,16 @@ async function deposit() {
             }
 
             const paymentUrl = await response.text();
-            // Lưu amount vào localStorage để kiểm tra sau khi callback
             localStorage.setItem('lastPaymentAmount', amount);
-            // Chuyển hướng người dùng đến trang thanh toán VNPay
             window.location.href = paymentUrl;
         } catch (error) {
             console.error('Lỗi khi tạo giao dịch:', error);
-            alert('Có lỗi xảy ra! Vui lòng thử lại.');
+            if (error.message === 'Phiên đăng nhập đã hết hạn') {
+                alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!');
+                window.location.href = '/login.html';
+            } else {
+                alert('Có lỗi xảy ra! Vui lòng thử lại.');
+            }
         }
     } else {
         alert('Vui lòng nhập một số tiền hợp lệ!');
@@ -446,12 +500,12 @@ async function handlePaymentCallback() {
             const balance = await fetchWalletBalance(localStorage.getItem('walletId'));
             const walletBalanceElement = document.getElementById('walletBalance');
             if (walletBalanceElement) {
-                walletBalanceElement.textContent = `Xu: ${balance}`;
+                walletBalanceElement.textContent = `${balance} VND`;
             }
             alert('Nạp tiền thành công!');
             // Chuyển về trang ví sau 2 giây
             setTimeout(() => {
-                window.location.href = '/wallet';
+                window.location.href = '/index.html';
             }, 2000);
         } catch (error) {
             console.error('Lỗi khi cập nhật số dư:', error);
@@ -461,7 +515,7 @@ async function handlePaymentCallback() {
         alert('Thanh toán không thành công!');
         // Chuyển về trang ví sau 2 giây
         setTimeout(() => {
-            window.location.href = '/wallet';
+            window.location.href = '/index.html';
         }, 2000);
     }
 }

@@ -110,18 +110,118 @@ function displayMusics(musics) {
                         <i class="fas fa-shopping-cart fa-3x"></i> <!-- Biểu tượng giỏ hàng -->
                     </div>
                 </div>
+
+                <div class="music-info text-center mt-3">
+                    <h5 class="music-title">${music.title}</h5>
+                    <p class="music-composer text-muted">${music.composerFullName}</p>
+                    <p class="music-price text-success">$${music.price}</p>
+                </div>
             </div>
         </div>
     `).join('');
 
-
-    
     container.innerHTML = musicHTML;
 }
 
+
+function getAudioUrl(filename) {
+    return `http://localhost:8181/api/musics/download/${filename}.mp3`;
+}
+
+// Hàm khởi tạo audio player
+function initializeAudioPlayer(musicId) {
+    const playerContainer = document.getElementById(`player-${musicId}`);
+    const audio = document.getElementById(`audio-${musicId}`);
+    const playBtn = playerContainer.querySelector('.play-btn');
+    const progressBar = playerContainer.querySelector('.progress-bar');
+    const progress = playerContainer.querySelector('.progress');
+    const currentTimeSpan = playerContainer.querySelector('.current-time');
+    const durationSpan = playerContainer.querySelector('.duration');
+
+    // Format time function
+    function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        seconds = Math.floor(seconds % 60);
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    // Play/Pause toggle
+    playBtn.addEventListener('click', () => {
+        if (audio.paused) {
+            // Pause all other playing audio first
+            document.querySelectorAll('audio').forEach(a => {
+                if (a !== audio && !a.paused) {
+                    a.pause();
+                    const otherBtn = a.parentElement.querySelector('.play-btn i');
+                    otherBtn.classList.remove('fa-pause');
+                    otherBtn.classList.add('fa-play');
+                }
+            });
+            
+            audio.play();
+            playBtn.querySelector('i').classList.remove('fa-play');
+            playBtn.querySelector('i').classList.add('fa-pause');
+        } else {
+            audio.pause();
+            playBtn.querySelector('i').classList.remove('fa-pause');
+            playBtn.querySelector('i').classList.add('fa-play');
+        }
+    });
+
+    // Update progress bar
+    audio.addEventListener('timeupdate', () => {
+        const percent = (audio.currentTime / audio.duration) * 100;
+        progressBar.style.width = `${percent}%`;
+        currentTimeSpan.textContent = formatTime(audio.currentTime);
+    });
+
+    // Click on progress bar to seek
+    progress.addEventListener('click', (e) => {
+        const rect = progress.getBoundingClientRect();
+        const percent = (e.clientX - rect.left) / rect.width;
+        audio.currentTime = percent * audio.duration;
+    });
+
+    // Update duration display when metadata is loaded
+    audio.addEventListener('loadedmetadata', () => {
+        durationSpan.textContent = formatTime(audio.duration);
+    });
+
+    // Reset when audio ends
+    audio.addEventListener('ended', () => {
+        progressBar.style.width = '0%';
+        playBtn.querySelector('i').classList.remove('fa-pause');
+        playBtn.querySelector('i').classList.add('fa-play');
+        currentTimeSpan.textContent = '0:00';
+    });
+
+    // Error handling
+    audio.addEventListener('error', (e) => {
+        console.error('Error loading audio:', e);
+        alert('Error loading audio. Please try again later.');
+    });
+}
+
+// Hàm tạo modals
 function generateModals(musics) {
+    if (!Array.isArray(musics)) {
+        console.error('Invalid musics data:', musics);
+        return;
+    }
+
     const modalContainer = document.querySelector('.modal-container');
-    const modalsHTML = musics.map(music => `
+    const modalsHTML = musics.map(music => {
+        let filename = '';
+        if (music.demo_url) {
+            filename = music.demo_url.split('\\').pop().replace('.mp3', '');
+        } else if (music.demoUrl) {
+            filename = music.demoUrl.split('\\').pop().replace('.mp3', '');
+        } else {
+            console.warn(`No demo URL found for music ID: ${music.id}`);
+            filename = music.id.toString();
+        }
+
+        return `
         <div class="portfolio-modal modal fade" id="portfolioModal${music.id}" tabindex="-1" aria-labelledby="portfolioModal${music.id}" aria-hidden="true">
             <div class="modal-dialog modal-xl">
                 <div class="modal-content">
@@ -132,14 +232,34 @@ function generateModals(musics) {
                         <div class="container">
                             <div class="row">
                                 <div class="col-lg-6">
-                                    <img class="img-fluid rounded mb-5" src="/assets/img/portfolio/cabin.png" alt="${music.title}" />
+                                    <img class="img-fluid rounded mb-5" src="${'/assets/img/portfolio/cabin.png'}" alt="${music.title || 'Music'}" />
+                                    
+                                    <!-- Custom Audio Player -->
+                                    <div class="custom-audio-player mb-4" id="player-${music.id}">
+                                        <audio id="audio-${music.id}">
+                                            <source src="${getAudioUrl(filename)}" type="audio/mpeg">
+                                        </audio>
+                                        
+                                        <div class="progress mb-2" style="height: 6px; cursor: pointer;">
+                                            <div class="progress-bar bg-primary" role="progressbar" style="width: 0%"></div>
+                                        </div>
+                                        
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="current-time">0:00</span>
+                                            <div class="controls">
+                                                <button class="btn btn-link play-btn">
+                                                    <i class="fas fa-play"></i>
+                                                </button>
+                                            </div>
+                                            <span class="duration">0:00</span>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="col-lg-6 text-start">
-                                    <h2 class="mb-3">${music.title}</h2>
-                                    <p class="text-muted mb-2">${music.composerFullName}</p>
+                                    <h2 class="mb-3">${music.title || 'Untitled'}</h2>
+                                    <p class="text-muted mb-2">${music.composerFullName || music.composer || 'Unknown Artist'}</p>
                                     
                                     <div class="d-flex align-items-center gap-3 mb-4">
-                                       
                                         <button class="btn btn-outline-secondary btn-circle">
                                             <i class="far fa-heart"></i>
                                         </button>
@@ -148,26 +268,20 @@ function generateModals(musics) {
                                         </button>
                                     </div>
 
-                                    <audio id="audio-${music.id}" class="audio-player" controls>
-                                        <source src="${music.demoUrl}" type="audio/mpeg">
-                                        Your browser does not support the audio element.
-                                    </audio>
-
                                     <div class="song-details mt-4">
                                         <div class="row mb-2">
                                             <div class="col-3">Category:</div>
-                                            <div class="col-9">${music.categoryName}</div>
+                                            <div class="col-9">${music.categoryName || music.category || 'Uncategorized'}</div>
                                         </div>
                                         <div class="row mb-2">
                                             <div class="col-3">Price:</div>
-                                            <div class="col-9">$${music.price}</div>
+                                            <div class="col-9">${music.price || 0} VND</div>
                                         </div>
                                     </div>
 
-                                 <button class="btn btn-primary" onclick="purchaseMusic(${music.id})">
-    <i class="fas fa-shopping-cart"></i> Mua
-</button>
-
+                                    <button class="btn btn-primary" onclick="showPurchaseModal(${music.id})">
+                                        <i class="fas fa-shopping-cart"></i> Mua
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -175,10 +289,42 @@ function generateModals(musics) {
                 </div>
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
     
     modalContainer.innerHTML = modalsHTML;
+
+    // Initialize audio players
+    musics.forEach(music => {
+        initializeAudioPlayer(music.id);
+    });
 }
+
+
+// Hàm show purchase modal (cần được định nghĩa)
+function showPurchaseModal(musicId) {
+    // Implement your purchase modal logic here
+    console.log('Show purchase modal for music ID:', musicId);
+}
+
+// Test data
+
+function showPurchaseModal(musicId) {
+    currentMusicId = musicId; // Lưu ID bài hát hiện tại
+
+    // Ẩn tất cả các modal hiện tại trước khi hiện modal xác nhận
+    const portfolioModals = document.querySelectorAll('.portfolio-modal');
+    portfolioModals.forEach(modal => {
+        const bsModal = bootstrap.Modal.getInstance(modal);
+        if (bsModal) {
+            bsModal.hide(); // Ẩn modal nếu nó đang mở
+        }
+    });
+
+    const purchaseModal = new bootstrap.Modal(document.getElementById('purchaseModal'));
+    purchaseModal.show();
+}
+
 
 function updateModal(musicDetail) {
     // Update modal content with detailed information if needed
@@ -203,6 +349,15 @@ function togglePlay(url, button) {
     }
 }
 async function purchaseMusic(musicId) {
+    const token = localStorage.getItem('token');
+    if (!token) {
+    
+        // Lưu lại trang hiện tại để sau khi đăng nhập có thể quay lại
+        localStorage.setItem('redirectAfterLogin', window.location.pathname);
+        // Chuyển hướng đến trang đăng nhập
+        window.location.href = '/login.html';
+        return;
+    }
     console.log('Attempting to purchase music with ID:', musicId);
     const userId = localStorage.getItem('userId'); // Lấy ID người mua từ localStorage
     const walletId = localStorage.getItem('walletId'); // Lấy walletId người mua từ localStorage
@@ -242,13 +397,34 @@ async function purchaseMusic(musicId) {
         }
 
         const result = await response.json();
-        alert(`Purchase successful! Remaining balance: $${result.newBalance}`);
         window.location.href = '/index.html';
+        const downloadUrl = `http://localhost:8181/api/musics/download/${music.title}.mp3`; // Hoặc sử dụng filename
+        const downloadLink = document.createElement('a');
+        downloadLink.href = downloadUrl; // Sử dụng URL tải xuống từ API
+        downloadLink.download = music.title; // Đặt tên file khi tải xuống
+        downloadLink.click(); // Tự động click để tải file
+        
         // Cập nhật số dư ví hiển thị
-        document.getElementById('walletBalance').textContent = `${result.newBalance}$`;
+        document.getElementById('walletBalance').textContent = `${result.newBalance} VND`;
     } catch (error) {
         console.error('There was a problem with the purchase:', error);
         alert('Transaction failed. Please try again later.');
     }
 }
+
+document.getElementById('confirmPurchaseButton').addEventListener('click', async () => {
+    if (currentMusicId) {
+        await purchaseMusic(currentMusicId); // Gọi hàm mua nhạc
+        const purchaseModal = bootstrap.Modal.getInstance(document.getElementById('purchaseModal'));
+        purchaseModal.hide(); // Đóng modal sau khi mua thành công
+    }
+});
+document.getElementById('cancelButton').addEventListener('click', function() {
+    const purchaseModal = bootstrap.Modal.getInstance(document.getElementById('purchaseModal'));
+    purchaseModal.hide(); // Ẩn modal xác nhận
+
+    // Hiện lại modal chi tiết nhạc (thay "musicId" bằng ID bài hát hiện tại)
+    const portfolioModal = new bootstrap.Modal(document.getElementById(`portfolioModal${currentMusicId}`));
+    portfolioModal.show(); // Hiện modal chi tiết nhạc
+});
 
