@@ -101,6 +101,7 @@
       .then(data => {
           console.log('Response data:', data); // Ghi lại phản hồi
           if (data.data && data.data.token) { // Kiểm tra token
+            localStorage.setItem('user', JSON.stringify(data.data));
             localStorage.setItem('token', data.data.token);
             localStorage.setItem('userId', data.data.user.id);// Lưu token
             localStorage.setItem('username', data.data.user.username);// Lưu token

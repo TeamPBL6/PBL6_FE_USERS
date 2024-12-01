@@ -125,7 +125,7 @@ function displayMusics(musics) {
 
 
 function getAudioUrl(filename) {
-    return `http://localhost:8181/api/musics/download/${filename}.mp3`;
+    return `http://localhost:8181/api/musics/download/${filename}`;
 }
 
 // Hàm khởi tạo audio player

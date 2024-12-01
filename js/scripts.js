@@ -85,7 +85,7 @@ fetch('Footer.html')
             formData.append('midiFile', midiFile);
     
             // Send to server
-            const response = await fetch('/api/create-music', {
+            const response = await fetch('http://localhost:8181/api/generate-music/create', {
                 method: 'POST',
                 body: formData
             });
